@@ -1,0 +1,17 @@
+/* styles/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* custom */
+html, body, #__next {
+  height: 100%;
+}
+body {
+  @apply bg-[#0b0b0b] text-white font-sans;
+}
+a { @apply underline; }
+.bg-moviebox { background: linear-gradient(180deg,#0b0b0b,#0f0f0f); }
+.card {
+  @apply bg-gray-900 rounded-2xl shadow-lg p-4;
+}
