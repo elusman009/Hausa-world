@@ -12,25 +12,51 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { user },
+          error: userError
+        } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push("/auth"); // redirect if not logged in
-        return;
+        if (userError || !user) {
+          console.log('No user found, redirecting to auth');
+          setLoading(false);
+          router.push("/auth");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        if (!error && data) {
+          setProfile(data);
+        } else {
+          console.log('Profile fetch error:', error);
+          // Create profile if it doesn't exist
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert({
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || user.email.split('@')[0],
+              notify_new_movies: true
+            })
+            .select()
+            .single();
+          
+          if (!createError) {
+            setProfile(newProfile);
+          }
+        }
+      } catch (error) {
+        console.error('Profile load error:', error);
+        router.push("/auth");
+      } finally {
+        setLoading(false);
       }
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (!error) {
-        setProfile(data);
-      }
-      setLoading(false);
     }
 
     loadProfile();
@@ -141,4 +167,4 @@ export default function ProfilePage() {
       </div>
     </div>
   );
-}
+    }
