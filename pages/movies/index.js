@@ -24,20 +24,20 @@ export default function MoviesPage() {
 
     // Apply filters based on query parameters
     if (type === "tv") {
-      query = query.ilike("genre", "%TV%");
+      query = query.contains("genres", ["TV"]);
     } else if (type === "live") {
-      query = query.ilike("genre", "%Sport%");
+      query = query.contains("genres", ["Sport"]);
     }
     
     if (category === "animation") {
-      query = query.ilike("genre", "%Animation%");
+      query = query.contains("genres", ["Animation"]);
     } else if (category === "novel") {
-      query = query.ilike("genre", "%Novel%");
+      query = query.contains("genres", ["Novel"]);
     }
 
     // Apply sorting
     if (sort === "most-watched") {
-      query = query.order("rating", { ascending: false });
+      query = query.order("year", { ascending: false }); // Fallback to year since rating doesn't exist
     } else {
       query = query.order("year", { ascending: false });
     }
@@ -136,13 +136,7 @@ export default function MoviesPage() {
                     <h3 className="font-semibold text-sm truncate">{movie.title}</h3>
                     <div className="flex items-center justify-between mt-1">
                       <div className="flex items-center space-x-1">
-                        <span className="text-xs text-white/70">{movie.genre} • {movie.year}</span>
-                        {movie.rating && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-orange-400">⭐</span>
-                            <span className="text-xs text-white/70">{movie.rating}</span>
-                          </div>
-                        )}
+                        <span className="text-xs text-white/70">{movie.genres?.join(", ") || "Unknown"} • {movie.year}</span>
                       </div>
                       <span className="text-xs bg-cyan-500 text-white px-2 py-0.5 rounded-full">₦{(movie.price_kobo / 100).toFixed(2)}</span>
                     </div>
@@ -155,4 +149,4 @@ export default function MoviesPage() {
       </div>
     </div>
   );
-}
+          }
