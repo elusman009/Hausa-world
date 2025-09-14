@@ -8,25 +8,41 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      const { data, error } = await supabase.auth.getSession()
-      
-      if (error) {
-        console.error('Auth error:', error.message)
-        router.push('/auth?error=auth_failed')
-        return
-      }
-
-      if (data.session) {
-        // User successfully logged in - ensure profile exists
-        try {
-          await ensureProfile(data.session.user)
-        } catch (error) {
-          console.error('Error ensuring profile:', error)
-          // Continue anyway - profile might exist from database trigger
+      try {
+        // First: Exchange the OAuth code for a session
+        const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(window.location.href)
+        
+        if (sessionError) {
+          console.error('Session exchange error:', sessionError.message)
+          router.push('/auth?error=session_failed')
+          return
         }
-        router.push('/profile')
-      } else {
-        router.push('/auth')
+
+        // Second: Get the session (should now exist)
+        const { data, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Auth error:', error.message)
+          router.push('/auth?error=auth_failed')
+          return
+        }
+
+        if (data.session) {
+          // User successfully logged in - ensure profile exists
+          try {
+            await ensureProfile(data.session.user)
+          } catch (error) {
+            console.error('Error ensuring profile:', error)
+            // Continue anyway - profile might exist from database trigger
+          }
+          router.push('/profile')
+        } else {
+          console.log('No session after code exchange')
+          router.push('/auth')
+        }
+      } catch (error) {
+        console.error('Callback error:', error)
+        router.push('/auth?error=callback_failed')
       }
     }
 
