@@ -4,8 +4,24 @@ export default function Auth() {
   const signIn = async () => {
     console.log('Starting Google OAuth sign in...')
     try {
-      // Use the correct Replit domain without port for redirect
-      const redirectUrl = 'https://137c1a6a-0402-4625-8b39-86a82f8ad4bf-00-1zscnblb92yzk.kirk.replit.dev/profile'
+      // Dynamic redirect URL that works in both Replit and Vercel
+      const getRedirectUrl = () => {
+        if (typeof window !== 'undefined') {
+          // Client-side: use current origin for auth callback
+          return `${window.location.origin}/auth/callback`
+        }
+        // Server-side fallback
+        if (process.env.REPLIT_DEV_DOMAIN) {
+          return `https://${process.env.REPLIT_DEV_DOMAIN}/auth/callback`
+        }
+        if (process.env.VERCEL_URL) {
+          return `https://${process.env.VERCEL_URL}/auth/callback`
+        }
+        // Production domain fallback
+        return `https://hausaworld.vercel.app/auth/callback`
+      }
+      
+      const redirectUrl = getRedirectUrl()
       console.log('Redirect URL:', redirectUrl)
       
       const result = await supabase.auth.signInWithOAuth({ 
