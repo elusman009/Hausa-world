@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
+import { ensureProfile } from "../lib/profileUtils";
 import MovieBoxNavbar from "../component/nav";
 
 export default function ProfilePage() {
@@ -35,20 +36,28 @@ export default function ProfilePage() {
           setProfile(data);
         } else {
           console.log('Profile fetch error:', error);
-          // Create profile if it doesn't exist
-          const { data: newProfile, error: createError } = await supabase
-            .from("profiles")
-            .insert({
+          // Ensure profile exists using the same method as auth callback
+          try {
+            await ensureProfile(user);
+            // Try to fetch the profile again after ensuring it exists
+            const { data: retryData, error: retryError } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", user.id)
+              .single();
+            
+            if (!retryError && retryData) {
+              setProfile(retryData);
+            }
+          } catch (profileError) {
+            console.error('Error ensuring profile:', profileError);
+            // If profile creation fails, we'll just show the profile form with default values
+            setProfile({
               id: user.id,
               email: user.email,
               full_name: user.user_metadata?.full_name || user.email.split('@')[0],
               notify_new_movies: true
-            })
-            .select()
-            .single();
-          
-          if (!createError) {
-            setProfile(newProfile);
+            });
           }
         }
       } catch (error) {
@@ -167,4 +176,4 @@ export default function ProfilePage() {
       </div>
     </div>
   );
-    }
+}
