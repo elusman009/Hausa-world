@@ -11,20 +11,33 @@ export default function MyPurchases() {
   }, []);
 
   async function fetchPurchases() {
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
-      alert("You must log in to view purchases.");
-      return;
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.log('No user found, redirecting to auth');
+        setLoading(false);
+        window.location.href = '/auth';
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("purchases")
+        .select("id, status, created_at, movies (title, file_url, price)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!error) {
+        setPurchases(data || []);
+      } else {
+        console.error('Error fetching purchases:', error);
+      }
+    } catch (error) {
+      console.error('Fetch purchases error:', error);
+      window.location.href = '/auth';
+    } finally {
+      setLoading(false);
     }
-
-    const { data, error } = await supabase
-      .from("purchases")
-      .select("id, status, created_at, movies (title, file_url, price)")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (!error) setPurchases(data);
-    setLoading(false);
   }
 
   if (loading) return (
@@ -94,4 +107,4 @@ export default function MyPurchases() {
       </div>
     </div>
   );
-}
+                  }
