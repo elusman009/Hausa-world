@@ -11,15 +11,15 @@ export default function AuthCallback() {
       
       if (error) {
         console.error('Auth error:', error.message)
-        router.push('/login?error=auth_failed')
+        router.push('/auth?error=auth_failed')
         return
       }
 
       if (data.session) {
         // User successfully logged in
-        router.push('/dashboard') // or wherever you want to redirect
+        router.push('/profile')
       } else {
-        router.push('/login')
+        router.push('/auth')
       }
     }
 
