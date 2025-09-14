@@ -23,7 +23,7 @@ export default function MovieCard({ movie }) {
 
       <div className="mt-3">
         <h3 className="font-semibold text-lg">{movie.title}</h3>
-        <p className="text-sm text-gray-600">{movie.genre}</p>
+        <p className="text-sm text-gray-600">{movie.genres?.join(\", \") || \"Unknown\"}</p>
         <p className="font-bold mt-1">₦{(movie.price_kobo / 100).toFixed(2)}</p>
 
         <Link
