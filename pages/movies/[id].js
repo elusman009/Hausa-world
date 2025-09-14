@@ -32,6 +32,17 @@ export default function MovieDetail() {
     }
   }, [id, sort]);
 
+  // Generate download URL when movie loads and user has purchased
+  useEffect(() => {
+    async function generateDownloadUrl() {
+      if (hasPurchased && movie?.file_path && !downloadUrl) {
+        const url = await getSignedUrl(movie.file_path);
+        if (url) setDownloadUrl(url);
+      }
+    }
+    generateDownloadUrl();
+  }, [hasPurchased, movie, downloadUrl]);
+
   async function fetchMovie() {
     const { data, error } = await supabase
       .from("movies")
@@ -126,7 +137,7 @@ export default function MovieDetail() {
     const fileExt = proofFile.name.split(".").pop();
     const filePath = `proofs/${user.id}-${Date.now()}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage.from("payment_proofs").upload(filePath, proofFile);
+    const { error: uploadError } = await supabase.storage.from("payment-proofs").upload(filePath, proofFile);
     if (uploadError) return alert("Upload failed: " + uploadError.message);
 
     const { error } = await supabase.from("purchases").insert([
@@ -136,6 +147,7 @@ export default function MovieDetail() {
         method: "bank_transfer",
         proof_url: filePath,
         status: "pending",
+        provider: "bank",
       },
     ]);
 
@@ -171,7 +183,7 @@ export default function MovieDetail() {
       {/* Details */}
       <div className="mt-6">
         <h1 className="text-3xl font-bold">{movie.title}</h1>
-        <p className="text-gray-400 mt-1">{movie.genre} • {movie.year}</p>
+        <p className="text-gray-400 mt-1">{movie.genres?.join(", ") || "Unknown"} • {movie.year}</p>
         <p className="mt-4 text-gray-200">{movie.description}</p>
 
         {/* Buy or Download */}
@@ -239,7 +251,7 @@ export default function MovieDetail() {
       {showPurchase && !hasPurchased && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Buy {movie.title} (${movie.price})</h2>
+            <h2 className="text-xl font-bold mb-4 text-black">Buy {movie.title} (₦{(movie.price_kobo / 100).toFixed(2)})</h2>
             <button onClick={payWithFlutterwave} className="w-full bg-green-600 text-white py-2 rounded mb-3 hover:bg-green-700">Pay with Flutterwave</button>
 
             <div className="border-t pt-3 mt-3">
