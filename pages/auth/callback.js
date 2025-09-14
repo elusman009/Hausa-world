@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabase'
+import { ensureProfile } from '../../lib/profileUtils'
 
 export default function AuthCallback() {
   const router = useRouter()
@@ -16,7 +17,13 @@ export default function AuthCallback() {
       }
 
       if (data.session) {
-        // User successfully logged in
+        // User successfully logged in - ensure profile exists
+        try {
+          await ensureProfile(data.session.user)
+        } catch (error) {
+          console.error('Error ensuring profile:', error)
+          // Continue anyway - profile might exist from database trigger
+        }
         router.push('/profile')
       } else {
         router.push('/auth')
